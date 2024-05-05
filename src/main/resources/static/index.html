@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>Remote Mouse Controller</title>
+    <style>
+        html,
+        body {
+          margin: 0;
+          height: 100%;
+          overflow: hidden;
+          background: black;
+          overscroll-behavior-x: none;
+        }
+    </style>
+</head>
+
+<body id="root">
+
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+
+<script>
+    const stompClient = new StompJs.Client({
+        brokerURL: `ws://${window.location.host}/ws`
+    });
+    stompClient.activate()
+
+    let clientX, clientY;
+
+    const root = document.getElementById('root');
+    root.addEventListener('click', (e) => {
+        stompClient.publish({
+            destination: "/app/click"
+        });
+    })
+    root.addEventListener('touchstart', async (e) => {
+        clientX = e.touches['0'].pageX;
+        clientY = e.touches['0'].pageY;
+    })
+    root.addEventListener('touchmove', async (e) => {
+        const newX = e.touches['0'].pageX
+        const newY = e.touches['0'].pageY
+
+        const xDiff = (clientX - newX) / 1.2;
+        const yDiff = (clientY - newY) / 1.2;
+
+        clientX = newX
+        clientY = newY
+
+        stompClient.publish({
+            destination: "/app/touchmove",
+            body: `${-Math.ceil(xDiff)};${-Math.ceil(yDiff)}`
+        });
+    })
+</script>
+</body>
+
+</html>
